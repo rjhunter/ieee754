@@ -8,6 +8,7 @@
 #include <iostream>
 #include <iomanip>
 #include <cmath>
+#include <bitset>
 #include <gtkmm/builder.h>
 #include <gtkmm/label.h>
 #include <gtkmm/checkbutton.h>
@@ -31,8 +32,9 @@ Ieee754::Ieee754(const Glib::RefPtr<Gtk::Builder> builder)
         std::stringstream ss;
         ss << "toggleBit" << i;
         builder->get_widget(ss.str(), m_bit_buttons[i]);
-        m_bit_buttons[i]->signal_toggled().connect([this,i](){on_toggle_bit(i);});
+        m_bit_buttons[i]->signal_toggled().connect([this,i](){ on_toggle_bit(i); });
     }
+
     builder->get_widget("labelDecimalRepresentation", m_decval);
     builder->get_widget("labelSignValue", m_signval);
     builder->get_widget("labelExponentValueBiased", m_expval_biased);
@@ -42,113 +44,113 @@ Ieee754::Ieee754(const Glib::RefPtr<Gtk::Builder> builder)
 
 
     {
-        Gtk::Button *button;
-        builder->get_widget("buttonBitwiseClear", button);
+        Gtk::Button *b;
+        builder->get_widget("buttonBitwiseClear", b);
         auto op = [](uint32_t ival){return 0u;};
-        button->signal_clicked().connect([this,op](){on_bitwise_op(op);});
+        b->signal_clicked().connect([this,op]{ on_bitwise_op(op); });
     }
     {
-        Gtk::Button *button;
-        builder->get_widget("buttonBitwiseInvert", button);
+        Gtk::Button *b;
+        builder->get_widget("buttonBitwiseInvert", b);
         auto op = [](uint32_t ival){return ~ival;};
-        button->signal_clicked().connect([this,op](){on_bitwise_op(op);});
+        b->signal_clicked().connect([this,op]{ on_bitwise_op(op); });
     }
     {
-        Gtk::Button *button;
-        builder->get_widget("buttonBitwiseShiftLeft", button);
+        Gtk::Button *b;
+        builder->get_widget("buttonBitwiseShiftLeft", b);
         auto op = [](uint32_t ival){return ival<<1;};
-        button->signal_clicked().connect([this,op](){on_bitwise_op(op);});
+        b->signal_clicked().connect([this,op]{ on_bitwise_op(op); });
     }
     {
-        Gtk::Button *button;
-        builder->get_widget("buttonBitwiseShiftRight", button);
+        Gtk::Button *b;
+        builder->get_widget("buttonBitwiseShiftRight", b);
         auto op = [](uint32_t ival){return ival>>1;};
-        button->signal_clicked().connect([this,op](){on_bitwise_op(op);});
+        b->signal_clicked().connect([this,op]{ on_bitwise_op(op); });
     }
     {
-        Gtk::CheckButton *button;
-        builder->get_widget("checkButtonSign", button);
-        button->signal_clicked().connect([this](){ m_bitop_sign = !m_bitop_sign;});
+        Gtk::CheckButton *b;
+        builder->get_widget("checkButtonSign", b);
+        b->signal_clicked().connect([this]{ m_bitop_sign = !m_bitop_sign; });
     }
     {
-        Gtk::CheckButton *button;
-        builder->get_widget("checkButtonExponent", button);
-        button->signal_clicked().connect([this](){ m_bitop_exp = !m_bitop_exp;});
+        Gtk::CheckButton *b;
+        builder->get_widget("checkButtonExponent", b);
+        b->signal_clicked().connect([this]{ m_bitop_exp = !m_bitop_exp; });
     }
     {
         Gtk::CheckButton *b;
         builder->get_widget("checkButtonMantissa", b);
-        b->signal_clicked().connect([this](){ m_bitop_mant = !m_bitop_mant;});
+        b->signal_clicked().connect([this]{ m_bitop_mant = !m_bitop_mant; });
     }
     {
         Gtk::Button *b;
         builder->get_widget("buttonZero", b);
-        b->signal_clicked().connect([this](){ m_fvalue = 0; update_bits();});
+        b->signal_clicked().connect([this]{ m_fvalue = 0; update_bits(); });
     }
     {
         Gtk::Button *b;
         builder->get_widget("buttonOne", b);
-        b->signal_clicked().connect([this](){ m_fvalue = 1; update_bits();});
+        b->signal_clicked().connect([this]{ m_fvalue = 1; update_bits(); });
     }
     {
         Gtk::Button *b;
         builder->get_widget("buttonTen", b);
-        b->signal_clicked().connect([this](){ m_fvalue = 10; update_bits();});
+        b->signal_clicked().connect([this]{ m_fvalue = 10; update_bits(); });
     }
     {
         Gtk::Button *b;
         builder->get_widget("buttonIncrement", b);
-        b->signal_clicked().connect([this](){ m_fvalue += 1; update_bits();});
+        b->signal_clicked().connect([this]{ m_fvalue += 1; update_bits(); });
     }
     {
         Gtk::Button *b;
         builder->get_widget("buttonDecrement", b);
-        b->signal_clicked().connect([this](){ m_fvalue -= 1; update_bits();});
+        b->signal_clicked().connect([this]{ m_fvalue -= 1; update_bits(); });
     }
     {
         Gtk::Button *b;
         builder->get_widget("buttonDouble", b);
-        b->signal_clicked().connect([this](){ m_fvalue *= 2; update_bits();});
+        b->signal_clicked().connect([this]{ m_fvalue *= 2; update_bits(); });
     }
     {
         Gtk::Button *b;
         builder->get_widget("buttonHalve", b);
-        b->signal_clicked().connect([this](){ m_fvalue *= 0.5; update_bits();});
+        b->signal_clicked().connect([this]{ m_fvalue *= 0.5; update_bits(); });
     }
     {
         Gtk::Button *b;
         builder->get_widget("buttonInf", b);
-        b->signal_clicked().connect([this](){ m_fvalue = std::numeric_limits<float>::infinity(); update_bits();});
+        b->signal_clicked().connect([this]{ m_fvalue = std::numeric_limits<float>::infinity(); update_bits(); });
     }
     {
         Gtk::Button *b;
         builder->get_widget("buttonNaN", b);
-        b->signal_clicked().connect([this](){ m_fvalue = std::numeric_limits<float>::quiet_NaN(); update_bits();});
+        b->signal_clicked().connect([this]{ m_fvalue = std::numeric_limits<float>::quiet_NaN(); update_bits(); });
     }
     {
         Gtk::Button *b;
         builder->get_widget("buttonEpsilon", b);
-        b->signal_clicked().connect([this](){ m_fvalue = std::numeric_limits<float>::epsilon(); update_bits();});
+        b->signal_clicked().connect([this]{ m_fvalue = std::numeric_limits<float>::epsilon(); update_bits(); });
     }
     {
         Gtk::Button *b;
         builder->get_widget("buttonMaxNorm", b);
-        b->signal_clicked().connect([this](){ m_fvalue = std::numeric_limits<float>::max(); update_bits();});
+        b->signal_clicked().connect([this]{ m_fvalue = std::numeric_limits<float>::max(); update_bits(); });
     }
     {
         Gtk::Button *b;
         builder->get_widget("buttonMinNorm", b);
-        b->signal_clicked().connect([this](){ m_fvalue = std::numeric_limits<float>::min(); update_bits();});
+        b->signal_clicked().connect([this]{ m_fvalue = std::numeric_limits<float>::min(); update_bits(); });
     }
     {
         Gtk::Button *b;
         builder->get_widget("buttonMaxDenorm", b);
-        b->signal_clicked().connect([this](){ m_ivalue = s_max_denorm; update_bits();});
+        b->signal_clicked().connect([this]{ m_ivalue = s_max_denorm; update_bits(); });
     }
     {
         Gtk::Button *b;
         builder->get_widget("buttonMinDenorm", b);
-        b->signal_clicked().connect([this](){ m_fvalue = std::numeric_limits<float>::denorm_min(); update_bits();});
+        b->signal_clicked().connect([this]{ m_fvalue = std::numeric_limits<float>::denorm_min(); update_bits(); });
     }
     update_display();
 }
@@ -207,7 +209,7 @@ void Ieee754::update_bits()
     }
 }
 
-void Ieee754::on_bitwise_op(uint32_t(*op)(uint32_t))
+void Ieee754::on_bitwise_op(std::function<uint32_t(uint32_t)> op)
 {
     uint32_t bitmask{1u};
     auto sval = op(m_ivalue);
@@ -242,14 +244,6 @@ std::string Ieee754::classify()
 }
 
 __attribute__((unused))
-void Ieee754::print_val(uint32_t ival)
-{
-    for (int i = 31; i >= 0; --i) {
-        if ((ival & (1u<<i)) != 0) {
-            std::cout << 1;
-        } else {
-            std::cout << 0;
-        }
-    }
-    std::cout << std::endl;
+void Ieee754::print_bits(uint32_t val) {
+    std::cout << std::bitset<s_num_bits>(val) << std::endl;
 }

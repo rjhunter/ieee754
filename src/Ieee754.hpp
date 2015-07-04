@@ -6,6 +6,7 @@
 #define IEEE754_IEEE754_H
 
 #include <cstdint>
+#include <functional>
 #include <gtkmm/togglebutton.h>
 
 class Ieee754
@@ -15,16 +16,15 @@ public:
     Ieee754(const Glib::RefPtr<Gtk::Builder>);
     static void check_traits();
     void on_toggle_bit(const int);
-    void on_bitwise_op(uint32_t (*)(uint32_t));
+    void on_bitwise_op(std::function<uint32_t(uint32_t)>);
     void update_bits();
 
 protected:
     void update_display();
-    //uint32_t value_to_int() { return reinterpret_cast<uint32_t&>(m_value); }
     float value_to_float(uint32_t ival) { return reinterpret_cast<float&>(ival); }
     template <typename T> std::string format_value(T);
     std::string classify();
-    __attribute__((unused)) void print_val(uint32_t ival);
+    __attribute__((unused)) void print_bits(uint32_t);
 
     static constexpr size_t s_num_bits{32};
     static constexpr size_t s_num_mant_bits{23};
@@ -54,6 +54,5 @@ protected:
     using button_iterator = std::array<Gtk::ToggleButton*, s_num_bits>::iterator;
     const button_iterator m_mant_begin, m_mant_end, m_exp_begin, m_exp_end, m_sign_begin, m_sign_end;
 };
-
 
 #endif //IEEE754_IEEE754_H
