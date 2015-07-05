@@ -3,7 +3,6 @@
 //
 
 #include <sstream>
-#include <stdexcept>
 #include <assert.h>
 #include <iostream>
 #include <iomanip>
@@ -22,16 +21,14 @@ Ieee754::Ieee754(const Glib::RefPtr<Gtk::Builder> builder)
   m_mant_begin{m_bit_buttons.begin()},
   m_mant_end{m_bit_buttons.begin() + s_num_mant_bits},
   m_exp_begin{m_bit_buttons.begin() + s_num_mant_bits},
-  m_exp_end{m_bit_buttons.begin() + s_num_mant_bits + s_num_exp_bits},
-  m_sign_begin{m_bit_buttons.begin() + s_num_mant_bits + s_num_exp_bits},
-  m_sign_end{m_bit_buttons.begin() + s_num_mant_bits + s_num_exp_bits + s_num_sign_bits}
+  m_exp_end{m_bit_buttons.begin() + s_num_mantexp_bits},
+  m_sign_begin{m_bit_buttons.begin() + s_num_mantexp_bits},
+  m_sign_end{m_bit_buttons.begin() + s_num_bits}
 {
-    Ieee754::check_traits();
+    check_traits();
 
     for (int i=0; i< s_num_bits; ++i) {
-        std::stringstream ss;
-        ss << "toggleBit" << i;
-        builder->get_widget(ss.str(), m_bit_buttons[i]);
+        builder->get_widget("toggleBit" + std::to_string(i), m_bit_buttons[i]);
         m_bit_buttons[i]->signal_toggled().connect([this,i](){ on_toggle_bit(i); });
     }
 
@@ -41,7 +38,6 @@ Ieee754::Ieee754(const Glib::RefPtr<Gtk::Builder> builder)
     builder->get_widget("labelExponentValueUnbiased", m_expval_unbiased);
     builder->get_widget("labelMantissaValue", m_mantval);
     builder->get_widget("labelClass", m_class);
-
 
     {
         Gtk::Button *b;
@@ -161,11 +157,10 @@ void Ieee754::check_traits()
     assert(float_limits::is_iec559);
 }
 
-template <typename T>
-inline std::string Ieee754::format_value(T value)
+std::string Ieee754::format_value(const float val)
 {
     std::stringstream ss;
-    ss << std::setprecision(std::numeric_limits<float>::digits10 + 1) << std::scientific << value;
+    ss << std::setprecision(std::numeric_limits<float>::digits10 + 1) << std::scientific << val;
     return ss.str();
 }
 
@@ -185,17 +180,11 @@ void Ieee754::on_toggle_bit(const int idx) {
 
 void Ieee754::update_display()
 {
-    m_decval->set_text(format_value<float>(m_fvalue));
-
-    m_signval->set_text(m_ivalue & (1u<<31) ? "-" : "+");
-
-    const uint32_t ev{(m_ivalue & s_exp_mask) >> 23};
-    m_expval_biased->set_text(format_value<int32_t>(ev));
-    m_expval_unbiased->set_text(format_value<int32_t>(ev - 127));
-
-    const float mv{value_to_float(s_zero_exp | (m_ivalue & ((1u<<23)-1)))};
-    m_mantval->set_text(format_value<float>(mv));
-
+    m_decval->set_text(format_value(m_fvalue));
+    m_signval->set_text(extract_sign() ? "-" : "+");
+    m_expval_biased->set_text(std::to_string(extract_exponent_biased()));
+    m_expval_unbiased->set_text(std::to_string(extract_exponent_unbiased()));
+    m_mantval->set_text(format_value(extract_mantissa()));
     m_class->set_text(classify());
 }
 
@@ -203,7 +192,7 @@ void Ieee754::update_bits()
 {
     uint32_t bitmask{1u};
 
-    for (auto& b: m_bit_buttons) {
+    for (auto b: m_bit_buttons) {
         b->set_active((m_ivalue & bitmask) != 0);
         bitmask <<= 1;
     }
